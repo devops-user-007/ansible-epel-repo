@@ -1,0 +1,23 @@
+---
+# tasks file for epel-repo
+
+- name: Check if EPEL repository is already configured
+  stat: path={{ epel_repository_file_path }}
+  register: epel_repository_file_result
+
+- name: Install EPEL repository
+  yum:
+    name: "{{ epel_repository_url }}"
+    state: present
+  register: result
+  until: 'result.rc == 0'
+  retries: 5
+  delay: 10
+  when: not epel_repository_file_result.stat.exists
+
+- name: Import EPEL GPG key
+  rpm_key:
+    key: "{{ epel_repository_gpg_key_url }}"
+    state: present
+  when: not epel_repository_file_result.stat.exists
+  ignore_errors: "true"
